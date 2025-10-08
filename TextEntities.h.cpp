@@ -4,8 +4,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <memory>
 
-//абстрактний базовий клас, для представлення всіх текстових видів  
+//абстрактний базовий клас, для представлення всіх текстових видів
 class TextEntity {
 public:
     virtual ~TextEntity() = default;
@@ -64,6 +65,32 @@ public:
 
     void print() const override {
         std::cout << "    " << getText() << std::endl; // З відступом для абзацу
+    }
+};
+
+class Document {
+private:
+    std::vector<std::unique_ptr<TextEntity>> entities;
+    std::string title;
+
+public:
+    explicit Document(std::string docTitle) : title(std::move(docTitle)) {}
+
+    void addEntity(std::unique_ptr<TextEntity> entity) {
+        entities.push_back(std::move(entity));
+    }
+    
+    const std::vector<std::unique_ptr<TextEntity>>& getEntities() const {
+        return entities;
+    }
+
+    void print() const {
+        std::cout << "--- Document: " << title << " ---" << std::endl;
+        for(const auto& entity : entities) {
+            entity->print();
+            std::cout << std::endl;
+        }
+        std::cout << "--- End of Document ---" << std::endl;
     }
 };
 
