@@ -57,4 +57,90 @@ public:
     }
 };
 
+//реалізація на основі двобічно зв'язного списку
+template <typename T>
+class LinkedList : public List<T> {
+private:
+    struct Node {
+        T value;
+        Node* next = nullptr;
+        Node* prev = nullptr;
+        Node(T val) : value(val) {}
+    };
+
+    Node* head = nullptr;
+    Node* tail = nullptr;
+    size_t count = 0;
+
+public:
+    ~LinkedList() {
+        Node* current = head;
+        while (current != nullptr) {
+            Node* next = current->next;
+            delete current;
+            current = next;
+        }
+    }
+
+    void add(const T& element) override {
+        Node* newNode = new Node(element);
+        if (isEmpty()) {
+            head = tail = newNode;
+        } else {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+        count++;
+    }
+
+    T get(size_t index) const override {
+        if (index >= count) {
+            throw std::out_of_range("Index out of range");
+        }
+        Node* current = head;
+        for (size_t i = 0; i < index; ++i) {
+            current = current->next;
+        }
+        return current->value;
+    }
+
+    void remove(size_t index) override {
+        if (index >= count) {
+            throw std::out_of_range("Index out of range");
+        }
+
+        Node* toDelete;
+        if (index == 0) {
+            toDelete = head;
+            head = head->next;
+            if (head) head->prev = nullptr;
+            else tail = nullptr;
+        } else if (index == count - 1) {
+            toDelete = tail;
+            tail = tail->prev;
+            tail->next = nullptr;
+        } else {
+            Node* current = head;
+            for (size_t i = 0; i < index; ++i) {
+                current = current->next;
+            }
+            toDelete = current;
+            current->prev->next = current->next;
+            current->next->prev = current->prev;
+        }
+
+        delete toDelete;
+        count--;
+    }
+
+    size_t size() const override {
+        return count;
+    }
+
+    bool isEmpty() const override {
+        return count == 0;
+    }
+};
+
 #endif // LIST_H
