@@ -79,7 +79,7 @@ public:
     void addEntity(std::unique_ptr<TextEntity> entity) {
         entities.push_back(std::move(entity));
     }
-    
+
     const std::vector<std::unique_ptr<TextEntity>>& getEntities() const {
         return entities;
     }
