@@ -10,7 +10,6 @@
 
 using SortableEntity = TextEntity*;
 
-// Інтерфейс працює з std::vector
 template <typename T>
 class SortingAlgorithm {
 public:
@@ -18,7 +17,7 @@ public:
     virtual void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) = 0;
 };
 
-// --- Базові алгоритми сортування ---
+//базові алгоритми сортування
 
 template <typename T>
 class InsertionSort : public SortingAlgorithm<T> {
@@ -86,7 +85,7 @@ private:
     }
 };
 
-// --- Додаткові алгоритми сортування (+*) ---
+//додаткові алгоритми сортування
 
 template <typename T>
 class SelectionSort : public SortingAlgorithm<T> {
@@ -124,7 +123,7 @@ private:
     }
 };
 
-// --- Швидкі не-порівняльні алгоритми (+*) ---
+//швидкі не-порівняльні алгоритми
 
 template <typename T>
 class BucketSort : public SortingAlgorithm<T> {
