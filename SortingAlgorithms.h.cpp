@@ -150,4 +150,52 @@ private:
     }
 };
 
+//non-comparison sorts
+template <typename T>
+class BucketSort : public SortingAlgorithm<T> {
+public:
+    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
+        auto getKey = [](const T& item) { return item->getCharCount(); };
+        std::vector<T> temp;
+        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
+        if (temp.empty()) return;
+        size_t maxKey = 0;
+        for(const auto& item : temp) if (getKey(item) > maxKey) maxKey = getKey(item);
+        std::vector<std::vector<T>> buckets(maxKey + 1);
+        for (const auto& item : temp) buckets[getKey(item)].push_back(item);
+        temp.clear();
+        for (const auto& bucket : buckets) for (const auto& item : bucket) temp.push_back(item);
+        while (!list.isEmpty()) list.remove(0);
+        for (const auto& item : temp) list.add(item);
+    }
+};
+
+template <typename T>
+class RadixSort : public SortingAlgorithm<T> {
+private:
+    void countingSortForRadix(std::vector<T>& arr, int exp, std::function<size_t(const T&)> getKey) {
+        std::vector<T> output(arr.size());
+        int count[10] = {0};
+        for (const auto& item : arr) count[(getKey(item) / exp) % 10]++;
+        for (int i = 1; i < 10; i++) count[i] += count[i - 1];
+        for (int i = arr.size() - 1; i >= 0; i--) {
+            output[count[(getKey(arr[i]) / exp) % 10] - 1] = arr[i];
+            count[(getKey(arr[i]) / exp) % 10]--;
+        }
+        arr = output;
+    }
+public:
+    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
+        auto getKey = [](const T& item) { return item->getCharCount(); };
+        std::vector<T> temp;
+        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
+        if (temp.empty()) return;
+        size_t maxKey = 0;
+        for(const auto& item : temp) if (getKey(item) > maxKey) maxKey = getKey(item);
+        for (int exp = 1; maxKey / exp > 0; exp *= 10) countingSortForRadix(temp, exp, getKey);
+        while (!list.isEmpty()) list.remove(0);
+        for (const auto& item : temp) list.add(item);
+    }
+};
+
 #endif // SORTING_ALGORITHMS_H
