@@ -1,52 +1,46 @@
+// SortingAlgorithms.h
+
 #ifndef SORTING_ALGORITHMS_H
 #define SORTING_ALGORITHMS_H
 
-#include "list.h"
-#include <functional>
 #include <vector>
+#include <functional>
 #include <algorithm>
+#include "TextEntities.h"
 
-//загальний механізм, зо дозволяє підключати нові алгоритми сортування
+using SortableEntity = TextEntity*;
+
+// Інтерфейс працює з std::vector
 template <typename T>
 class SortingAlgorithm {
 public:
     virtual ~SortingAlgorithm() = default;
-
-    virtual void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) = 0;
+    virtual void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) = 0;
 };
 
-//базові алгоритми сортування
+// --- Базові алгоритми сортування ---
+
 template <typename T>
 class InsertionSort : public SortingAlgorithm<T> {
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-
-        for (size_t i = 1; i < temp.size(); i++) {
-            T key = temp[i];
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        for (size_t i = 1; i < data.size(); i++) {
+            T key = data[i];
             int j = i - 1;
-            while (j >= 0 && comparator(key, temp[j])) {
-                temp[j + 1] = temp[j];
+            while (j >= 0 && comparator(key, data[j])) {
+                data[j + 1] = data[j];
                 j = j - 1;
             }
-            temp[j + 1] = key;
+            data[j + 1] = key;
         }
-
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
     }
 };
 
 template <typename T>
 class QuickSort : public SortingAlgorithm<T> {
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-        if(!temp.empty()) quickSortRecursive(temp, 0, temp.size() - 1, comparator);
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        if(!data.empty()) quickSortRecursive(data, 0, data.size() - 1, comparator);
     }
 private:
     void quickSortRecursive(std::vector<T>& arr, int low, int high, std::function<bool(const T&, const T&)> comp) {
@@ -59,12 +53,7 @@ private:
     int partition(std::vector<T>& arr, int low, int high, std::function<bool(const T&, const T&)> comp) {
         T pivot = arr[high];
         int i = (low - 1);
-        for (int j = low; j <= high - 1; j++) {
-            if (comp(arr[j], pivot)) {
-                i++;
-                std::swap(arr[i], arr[j]);
-            }
-        }
+        for (int j = low; j <= high - 1; j++) if (comp(arr[j], pivot)) std::swap(arr[++i], arr[j]);
         std::swap(arr[i + 1], arr[high]);
         return (i + 1);
     }
@@ -73,12 +62,8 @@ private:
 template <typename T>
 class MergeSort : public SortingAlgorithm<T> {
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-        if(!temp.empty()) mergeSortRecursive(temp, 0, temp.size() - 1, comparator);
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        if(!data.empty()) mergeSortRecursive(data, 0, data.size() - 1, comparator);
     }
 private:
     void merge(std::vector<T>& arr, int l, int m, int r, std::function<bool(const T&, const T&)> comp) {
@@ -101,42 +86,31 @@ private:
     }
 };
 
-//added extra comparison sorts
+// --- Додаткові алгоритми сортування (+*) ---
+
 template <typename T>
 class SelectionSort : public SortingAlgorithm<T> {
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-
-        for (size_t i = 0; i < temp.size() - 1; i++) {
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        for (size_t i = 0; i < data.size() - 1; i++) {
             size_t min_idx = i;
-            for (size_t j = i + 1; j < temp.size(); j++) {
-                if (comparator(temp[j], temp[min_idx])) min_idx = j;
+            for (size_t j = i + 1; j < data.size(); j++) {
+                if (comparator(data[j], data[min_idx])) min_idx = j;
             }
-            if (min_idx != i) std::swap(temp[i], temp[min_idx]);
+            if (min_idx != i) std::swap(data[i], data[min_idx]);
         }
-
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
     }
 };
 
 template <typename T>
 class HeapSort : public SortingAlgorithm<T> {
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-
-        for (int i = temp.size() / 2 - 1; i >= 0; i--) heapify(temp, temp.size(), i, comparator);
-        for (int i = temp.size() - 1; i > 0; i--) {
-            std::swap(temp[0], temp[i]);
-            heapify(temp, i, 0, comparator);
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        for (int i = data.size() / 2 - 1; i >= 0; i--) heapify(data, data.size(), i, comparator);
+        for (int i = data.size() - 1; i > 0; i--) {
+            std::swap(data[0], data[i]);
+            heapify(data, i, 0, comparator);
         }
-
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
     }
 private:
     void heapify(std::vector<T>& arr, int n, int i, std::function<bool(const T&, const T&)> comp) {
@@ -150,23 +124,20 @@ private:
     }
 };
 
-//non-comparison sorts
+// --- Швидкі не-порівняльні алгоритми (+*) ---
+
 template <typename T>
 class BucketSort : public SortingAlgorithm<T> {
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        if (data.empty()) return;
         auto getKey = [](const T& item) { return item->getCharCount(); };
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-        if (temp.empty()) return;
         size_t maxKey = 0;
-        for(const auto& item : temp) if (getKey(item) > maxKey) maxKey = getKey(item);
+        for(const auto& item : data) if (getKey(item) > maxKey) maxKey = getKey(item);
         std::vector<std::vector<T>> buckets(maxKey + 1);
-        for (const auto& item : temp) buckets[getKey(item)].push_back(item);
-        temp.clear();
-        for (const auto& bucket : buckets) for (const auto& item : bucket) temp.push_back(item);
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
+        for (const auto& item : data) buckets[getKey(item)].push_back(item);
+        data.clear();
+        for (const auto& bucket : buckets) for (const auto& item : bucket) data.push_back(item);
     }
 };
 
@@ -185,16 +156,12 @@ private:
         arr = output;
     }
 public:
-    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
+    void sort(std::vector<T>& data, std::function<bool(const T& a, const T& b)> comparator) override {
+        if (data.empty()) return;
         auto getKey = [](const T& item) { return item->getCharCount(); };
-        std::vector<T> temp;
-        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
-        if (temp.empty()) return;
         size_t maxKey = 0;
-        for(const auto& item : temp) if (getKey(item) > maxKey) maxKey = getKey(item);
-        for (int exp = 1; maxKey / exp > 0; exp *= 10) countingSortForRadix(temp, exp, getKey);
-        while (!list.isEmpty()) list.remove(0);
-        for (const auto& item : temp) list.add(item);
+        for(const auto& item : data) if (getKey(item) > maxKey) maxKey = getKey(item);
+        for (int exp = 1; maxKey / exp > 0; exp *= 10) countingSortForRadix(data, exp, getKey);
     }
 };
 
