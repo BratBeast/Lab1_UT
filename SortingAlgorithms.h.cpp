@@ -101,4 +101,53 @@ private:
     }
 };
 
+//added extra comparison sorts
+template <typename T>
+class SelectionSort : public SortingAlgorithm<T> {
+public:
+    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
+        std::vector<T> temp;
+        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
+
+        for (size_t i = 0; i < temp.size() - 1; i++) {
+            size_t min_idx = i;
+            for (size_t j = i + 1; j < temp.size(); j++) {
+                if (comparator(temp[j], temp[min_idx])) min_idx = j;
+            }
+            if (min_idx != i) std::swap(temp[i], temp[min_idx]);
+        }
+
+        while (!list.isEmpty()) list.remove(0);
+        for (const auto& item : temp) list.add(item);
+    }
+};
+
+template <typename T>
+class HeapSort : public SortingAlgorithm<T> {
+public:
+    void sort(List<T>& list, std::function<bool(const T& a, const T& b)> comparator) override {
+        std::vector<T> temp;
+        for (size_t i = 0; i < list.size(); ++i) temp.push_back(list.get(i));
+
+        for (int i = temp.size() / 2 - 1; i >= 0; i--) heapify(temp, temp.size(), i, comparator);
+        for (int i = temp.size() - 1; i > 0; i--) {
+            std::swap(temp[0], temp[i]);
+            heapify(temp, i, 0, comparator);
+        }
+
+        while (!list.isEmpty()) list.remove(0);
+        for (const auto& item : temp) list.add(item);
+    }
+private:
+    void heapify(std::vector<T>& arr, int n, int i, std::function<bool(const T&, const T&)> comp) {
+        int largest = i, left = 2 * i + 1, right = 2 * i + 2;
+        if (left < n && comp(arr[largest], arr[left])) largest = left;
+        if (right < n && comp(arr[largest], arr[right])) largest = right;
+        if (largest != i) {
+            std::swap(arr[i], arr[largest]);
+            heapify(arr, n, largest, comp);
+        }
+    }
+};
+
 #endif // SORTING_ALGORITHMS_H
