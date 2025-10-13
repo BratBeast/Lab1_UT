@@ -1,5 +1,3 @@
-// TextEntities.h
-
 #ifndef TEXT_ENTITIES_H
 #define TEXT_ENTITIES_H
 
@@ -77,7 +75,7 @@ public:
     void addEntity(std::unique_ptr<TextEntity> entity) {
         add(std::move(entity));
     }
-    
+
     std::string getText() const override { return title; }
     size_t getCharCount() const override { return title.length(); }
 

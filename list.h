@@ -2,10 +2,9 @@
 #define LIST_H
 
 #include <iostream>
-#include <vector>
 #include <stdexcept>
 
-//шаблонний абстрактний клас для списку
+//шаблонний абстрактний клас (інтерфейс) для списку
 template <typename T>
 class List {
 public:
@@ -27,37 +26,67 @@ public:
 template <typename T>
 class ArrayList : public List<T> {
 private:
-    std::vector<T> data;
+    T* data;
+    size_t currentSize;
+    size_t capacity;
+
+    //приватний метод для розширення масиву
+    void resize() {
+        capacity = (capacity == 0) ? 10 : capacity * 2;
+        T* newData = new T[capacity];
+        for (size_t i = 0; i < currentSize; ++i) {
+            newData[i] = data[i];
+        }
+        delete[] data;
+        data = newData;
+    }
 
 public:
+    ArrayList() : data(nullptr), currentSize(0), capacity(0) {
+        resize(); // Початкове виділення пам'яті
+    }
+
+    ~ArrayList() {
+        delete[] data;
+    }
+
     void add(const T& element) override {
-        data.push_back(element);
+        //якщо місця більше немає, розширюємо масив
+        if (currentSize >= capacity) {
+            resize();
+        }
+        //додаємо новий елемент і збільшуємо лічильник
+        data[currentSize] = element;
+        currentSize++;
     }
 
     T get(size_t index) const override {
-        if (index >= data.size()) {
+        if (index >= currentSize) {
             throw std::out_of_range("Index out of range");
         }
         return data[index];
     }
 
     void remove(size_t index) override {
-        if (index >= data.size()) {
+        if (index >= currentSize) {
             throw std::out_of_range("Index out of range");
         }
-        data.erase(data.begin() + index);
+        //зсуваємо всі елементи праворуч від видаленого на одну позицію вліво
+        for (size_t i = index; i < currentSize - 1; ++i) {
+            data[i] = data[i + 1];
+        }
+        currentSize--;
     }
 
     size_t size() const override {
-        return data.size();
+        return currentSize;
     }
 
     bool isEmpty() const override {
-        return data.empty();
+        return currentSize == 0;
     }
 };
 
-//реалізація на основі двобічно зв'язного списку
 template <typename T>
 class LinkedList : public List<T> {
 private:
@@ -65,7 +94,7 @@ private:
         T value;
         Node* next = nullptr;
         Node* prev = nullptr;
-        Node(T val) : value(val) {}
+        explicit Node(T val) : value(val) {}
     };
 
     Node* head = nullptr;
@@ -110,24 +139,18 @@ public:
             throw std::out_of_range("Index out of range");
         }
 
-        Node* toDelete;
+        Node* toDelete = head;
         if (index == 0) {
-            toDelete = head;
             head = head->next;
             if (head) head->prev = nullptr;
             else tail = nullptr;
-        } else if (index == count - 1) {
-            toDelete = tail;
-            tail = tail->prev;
-            tail->next = nullptr;
         } else {
-            Node* current = head;
             for (size_t i = 0; i < index; ++i) {
-                current = current->next;
+                toDelete = toDelete->next;
             }
-            toDelete = current;
-            current->prev->next = current->next;
-            current->next->prev = current->prev;
+            toDelete->prev->next = toDelete->next;
+            if (toDelete->next) toDelete->next->prev = toDelete->prev;
+            else tail = toDelete->prev;
         }
 
         delete toDelete;
