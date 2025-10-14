@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 //шаблонний абстрактний клас (інтерфейс) для списку
 template <typename T>
@@ -16,6 +17,19 @@ public:
     virtual size_t size() const = 0;
     virtual bool isEmpty() const = 0;
 
+    //метод для зміни елемента за індексом
+    virtual void set(size_t index, const T& element) = 0;
+
+    //метод для обміну двох елементів місцями
+    virtual void swap(size_t index1, size_t index2) {
+        if (index1 >= size() || index2 >= size()) {
+            throw std::out_of_range("Index out of range for swap");
+        }
+        T temp = get(index1);
+        set(index1, get(index2));
+        set(index2, temp);
+    }
+
     void print() const {
         for (size_t i = 0; i < size(); ++i) {
             std::cout << get(i) << "\n";
@@ -23,6 +37,7 @@ public:
     }
 };
 
+//низькорівнева реалізація ArrayList
 template <typename T>
 class ArrayList : public List<T> {
 private:
@@ -30,7 +45,6 @@ private:
     size_t currentSize;
     size_t capacity;
 
-    //приватний метод для розширення масиву
     void resize() {
         capacity = (capacity == 0) ? 10 : capacity * 2;
         T* newData = new T[capacity];
@@ -43,7 +57,7 @@ private:
 
 public:
     ArrayList() : data(nullptr), currentSize(0), capacity(0) {
-        resize(); // Початкове виділення пам'яті
+        resize();
     }
 
     ~ArrayList() {
@@ -51,11 +65,9 @@ public:
     }
 
     void add(const T& element) override {
-        //якщо місця більше немає, розширюємо масив
         if (currentSize >= capacity) {
             resize();
         }
-        //додаємо новий елемент і збільшуємо лічильник
         data[currentSize] = element;
         currentSize++;
     }
@@ -71,7 +83,6 @@ public:
         if (index >= currentSize) {
             throw std::out_of_range("Index out of range");
         }
-        //зсуваємо всі елементи праворуч від видаленого на одну позицію вліво
         for (size_t i = index; i < currentSize - 1; ++i) {
             data[i] = data[i + 1];
         }
@@ -84,6 +95,20 @@ public:
 
     bool isEmpty() const override {
         return currentSize == 0;
+    }
+
+    void set(size_t index, const T& element) override {
+        if (index >= currentSize) {
+            throw std::out_of_range("Index out of range for set");
+        }
+        data[index] = element;
+    }
+
+    void swap(size_t index1, size_t index2) override {
+        if (index1 >= currentSize || index2 >= currentSize) {
+            throw std::out_of_range("Index out of range for swap");
+        }
+        std::swap(data[index1], data[index2]);
     }
 };
 
@@ -100,6 +125,15 @@ private:
     Node* head = nullptr;
     Node* tail = nullptr;
     size_t count = 0;
+
+    Node* getNode(size_t index) const {
+        if (index >= count) return nullptr;
+        Node* current = head;
+        for (size_t i = 0; i < index; ++i) {
+            current = current->next;
+        }
+        return current;
+    }
 
 public:
     ~LinkedList() {
@@ -139,19 +173,14 @@ public:
             throw std::out_of_range("Index out of range");
         }
 
-        Node* toDelete = head;
-        if (index == 0) {
-            head = head->next;
-            if (head) head->prev = nullptr;
-            else tail = nullptr;
-        } else {
-            for (size_t i = 0; i < index; ++i) {
-                toDelete = toDelete->next;
-            }
-            toDelete->prev->next = toDelete->next;
-            if (toDelete->next) toDelete->next->prev = toDelete->prev;
-            else tail = toDelete->prev;
-        }
+        Node* toDelete = getNode(index); // Використовуємо getNode
+        if (!toDelete) return; // Додаткова перевірка
+
+        if (toDelete->prev) toDelete->prev->next = toDelete->next;
+        else head = toDelete->next; // Видаляли голову
+
+        if (toDelete->next) toDelete->next->prev = toDelete->prev;
+        else tail = toDelete->prev; // Видаляли хвіст
 
         delete toDelete;
         count--;
@@ -163,6 +192,15 @@ public:
 
     bool isEmpty() const override {
         return count == 0;
+    }
+
+    void set(size_t index, const T& element) override {
+        Node* node = getNode(index);
+        if (node) {
+            node->value = element;
+        } else {
+            throw std::out_of_range("Index out of range for set");
+        }
     }
 };
 
